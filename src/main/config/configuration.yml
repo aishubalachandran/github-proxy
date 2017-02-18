@@ -1,13 +1,26 @@
-githubApiToken: b5d64d6ddb92e5cf16a12abf64a0d6956f4c7a45
+githubApiToken: ${GITHUB_API_TOKEN}
 port: 8080
 
 server:
   applicationConnectors:
     - type: http
-	  port: 8080
+      port: 8080
   adminConnectors:
     - type: http
       port: 8081
-      
-healthCheckUri: /healthCheck
-		   
+
+redis:
+  # The redis server's address; required.
+  endpoint: localhost:6379
+  # Auth password for redis server connection.  (default: null)
+  password: null
+  # The minimum number of idle connections to maintain in the pool.  (default: 0)
+  minIdle: 0
+  # The maximum number of idle connections allowed in the pool.  (default: 0)
+  maxIdle: 0
+  # The maximum number of connections allowed in the pool.  (default: 1024)
+  maxTotal: 1924
+  # Enables SSL connection. (default: false)
+  ssl: false
+  # The configured timeout (in milliseconds) for redis connections in the connection pool.  (default: 2000)
+  timeout: 2000
