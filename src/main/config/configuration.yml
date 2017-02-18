@@ -1,0 +1,13 @@
+githubApiToken: b5d64d6ddb92e5cf16a12abf64a0d6956f4c7a45
+port: 8080
+
+server:
+  applicationConnectors:
+    - type: http
+	  port: 8080
+  adminConnectors:
+    - type: http
+      port: 8081
+      
+healthCheckUri: /healthCheck
+		   
