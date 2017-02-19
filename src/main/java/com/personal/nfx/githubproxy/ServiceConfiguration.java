@@ -11,6 +11,8 @@ public class ServiceConfiguration extends Configuration {
 
 	private String githubApiToken;
 
+	private String githubApiBaseURL;
+
 	private int port;
 
 	@NotNull
@@ -39,5 +41,13 @@ public class ServiceConfiguration extends Configuration {
 
 	public void setRedis(JedisFactory redis) {
 		this.redis = redis;
+	}
+
+	public String getGithubApiBaseURL() {
+		return githubApiBaseURL;
+	}
+
+	public void setGithubApiBaseURL(String githubApiBaseURL) {
+		this.githubApiBaseURL = githubApiBaseURL;
 	}
 }

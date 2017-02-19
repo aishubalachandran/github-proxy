@@ -1,4 +1,5 @@
 githubApiToken: ${GITHUB_API_TOKEN}
+githubApiBaseURL: https://api.github.com/
 port: 8080
 
 server:

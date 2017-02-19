@@ -12,10 +12,15 @@ import javax.ws.rs.core.Response;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
+import redis.clients.jedis.Jedis;
+
 @Path("/orgs")
 public class GithubOrganizationResource {
 
-	public GithubOrganizationResource() {
+	private final Jedis jedis;
+
+	public GithubOrganizationResource(Jedis jedis) {
+		this.jedis = jedis;
 	}
 
 	@Path("/{org_name}")
@@ -24,7 +29,7 @@ public class GithubOrganizationResource {
 	public Response getOrg(
 			@PathParam("org_name") @NotNull @NotEmpty String orgName)
 			throws IOException {
-		return Response.ok().build();
+		return Response.ok(jedis.get("organization")).build();
 	}
 
 	@Path("/{org_name}/members")
@@ -32,14 +37,16 @@ public class GithubOrganizationResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrgMembers(
 			@PathParam("org_name") @NotNull @NotEmpty String orgName) {
-		return Response.ok().build();
+		return Response.ok(jedis.get("all:members")).build();
 	}
 
 	@Path("/{org_name}/repos")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrgRepos(
-			@PathParam("org_name") @NotNull @NotEmpty String orgName) {
-		return Response.ok().build();
+			@PathParam("org_name") @NotNull @NotEmpty String orgName)
+			throws IOException {
+
+		return Response.ok(jedis.get("all:repos:data")).build();
 	}
 }
