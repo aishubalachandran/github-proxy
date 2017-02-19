@@ -1,4 +1,4 @@
-package com.personal.nfx.githubproxy;
+package com.personal.nfx.githubproxy.client;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -17,22 +17,28 @@ import org.json.JSONObject;
 
 import redis.clients.jedis.Jedis;
 
-public class GithubProxyClient {
+public class RedisCacheClient implements ICacheClient {
 
 	private static final int PER_PAGE = 30;
+	private static final String QUERY_PARAM_PER_PAGE = "per_page";
+	private static final String QUERY_PARAM_PAGE = "page";
+	private static final String REL_LINK_LAST = "last";
+	private static final String AUTHORIZATION_HEADER = "Authorization";
+	private static final String AUTHORIZATION_HEADER_VAL_TOKEN = "token ";
+	private static final String BASE_PATH = "/";
+	private static final String ALL_MEMBERS_PATH = "/orgs/Netflix/members";
+	private static final String ALL_REPOS_PATH = "/orgs/Netflix/repos";
+	private static final String ORG_PATH = "/orgs/Netflix";
 
 	private final String apiToken;
-
 	private final String baseURL;
+	private final Client client;
+	private final Jedis jedis;
 
-	private Client client;
-
-	private Jedis jedis;
-
-	private DateFormat dateFormatter = new SimpleDateFormat(
+	private final DateFormat dateFormatter = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-	public GithubProxyClient(String apiToken, String baseURL, Client client,
+	public RedisCacheClient(String apiToken, String baseURL, Client client,
 			Jedis jedis) {
 		this.apiToken = apiToken;
 		this.baseURL = baseURL;
@@ -40,42 +46,24 @@ public class GithubProxyClient {
 		this.jedis = jedis;
 	}
 
-	public void fetchDataFromGithub() throws ParseException {
-
-		getBaseUrl();
-
-		getOrganization();
-
-		getAllRepositories();
-
-		getAllMembers();
-
+	@Override
+	public void refreshCache() throws ParseException {
+		fetchAndUpdateBaseURL();
+		fetchAndUpdateOrganization();
+		fetchAndUpdateAllRespositories();
+		fetchAndUpdateAllMembers();
 	}
 
-	private void getBaseUrl() {
-		WebTarget target = client.target(this.baseURL).path("/");
-
-		Response response = target.request(MediaType.APPLICATION_JSON)
-				.header("Authorization", "token " + this.apiToken).get();
-
-		jedis.set("base:data", response.readEntity(String.class));
-
-	}
-
-	private void getAllMembers() {
-		WebTarget target = client.target(this.baseURL).path(
-				"/orgs/Netflix/members");
+	private void fetchAndUpdateAllMembers() {
+		WebTarget target = client.target(this.baseURL).path(ALL_MEMBERS_PATH);
 		boolean hasNext = true;
 		int page = 1;
 		JSONArray result = new JSONArray();
 
 		while (hasNext) {
-			Response response = target.queryParam("page", page)
-					.queryParam("per_page", PER_PAGE)
-					.request(MediaType.APPLICATION_JSON)
-					.header("Authorization", "token " + this.apiToken).get();
+			Response response = getPaginatedResponse(target, page);
 
-			Link link = response.getLink("last");
+			Link link = response.getLink(REL_LINK_LAST);
 			if (link != null) {
 				page++;
 			} else {
@@ -92,22 +80,16 @@ public class GithubProxyClient {
 		jedis.set("all:members", result.toString());
 	}
 
-	// TODO : Optimize the logic to write to redis only once after iterating
-	// over all pages.
-	private void getAllRepositories() throws ParseException {
-		WebTarget target = client.target(this.baseURL).path(
-				"/orgs/Netflix/repos");
+	private void fetchAndUpdateAllRespositories() throws ParseException {
+		WebTarget target = client.target(this.baseURL).path(ALL_REPOS_PATH);
 		boolean hasNext = true;
 		int page = 1;
 		JSONArray consolidatedResult = new JSONArray();
 
 		while (hasNext) {
-			Response response = target.queryParam("page", page)
-					.queryParam("per_page", PER_PAGE)
-					.request(MediaType.APPLICATION_JSON)
-					.header("Authorization", "token " + this.apiToken).get();
+			Response response = getPaginatedResponse(target, page);
 
-			Link link = response.getLink("last");
+			Link link = response.getLink(REL_LINK_LAST);
 			if (link != null) {
 				page++;
 			} else {
@@ -148,15 +130,38 @@ public class GithubProxyClient {
 		}
 
 		jedis.set("all:repos:data", consolidatedResult.toString());
+
 	}
 
-	private void getOrganization() {
-		WebTarget target = client.target(this.baseURL).path("/orgs/Netflix");
+	private void fetchAndUpdateOrganization() {
+		WebTarget target = client.target(this.baseURL).path(ORG_PATH);
 
-		Response response = target.request(MediaType.APPLICATION_JSON)
-				.header("Authorization", "token " + this.apiToken).get();
+		Response response = target
+				.request(MediaType.APPLICATION_JSON)
+				.header(AUTHORIZATION_HEADER,
+						AUTHORIZATION_HEADER_VAL_TOKEN + this.apiToken).get();
 
 		jedis.set("organization", response.readEntity(String.class));
+
 	}
 
+	private void fetchAndUpdateBaseURL() {
+		WebTarget target = client.target(this.baseURL).path(BASE_PATH);
+
+		Response response = target
+				.request(MediaType.APPLICATION_JSON)
+				.header(AUTHORIZATION_HEADER,
+						AUTHORIZATION_HEADER_VAL_TOKEN + this.apiToken).get();
+
+		jedis.set("base:data", response.readEntity(String.class));
+	}
+
+	private Response getPaginatedResponse(WebTarget target, int page) {
+		return target
+				.queryParam(QUERY_PARAM_PAGE, page)
+				.queryParam(QUERY_PARAM_PER_PAGE, PER_PAGE)
+				.request(MediaType.APPLICATION_JSON)
+				.header(AUTHORIZATION_HEADER,
+						AUTHORIZATION_HEADER_VAL_TOKEN + this.apiToken).get();
+	}
 }

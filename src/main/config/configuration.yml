@@ -25,3 +25,8 @@ redis:
   ssl: false
   # The configured timeout (in milliseconds) for redis connections in the connection pool.  (default: 2000)
   timeout: 2000
+
+logging:
+  level: DEBUG
+  appenders:
+    - type: console

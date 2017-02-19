@@ -19,6 +19,8 @@ import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -30,61 +32,77 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.personal.nfx.githubproxy.resources.CustomViewResource;
-import com.personal.nfx.githubproxy.resources.GithubOrganizationResource;
+import com.personal.nfx.githubproxy.client.GithubProxyClient;
+import com.personal.nfx.githubproxy.client.RedisCacheClient;
+import com.personal.nfx.githubproxy.exception.UnhandledExceptionMapper;
+import com.personal.nfx.githubproxy.resources.GithubProxyResource;
 import com.personal.nfx.githubproxy.resources.ServiceHealthCheck;
-import com.personal.nfx.githubproxy.scheduler.CacheJob;
+import com.personal.nfx.githubproxy.scheduler.CacheRefreshJob;
 
 public class GithubProxyApplication extends Application<ServiceConfiguration> {
 
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(GithubProxyApplication.class);
+
+	private static final int CACHE_REFRESH_IN_MINUTES = 15;
 	private static JedisPool pool;
 	private Jedis jedis;
 	private Client client;
 	private GithubProxyClient githubProxyClient;
+	private RedisCacheClient redisCacheClient;
 
 	@Override
 	public void run(ServiceConfiguration configuration, Environment env)
 			throws Exception {
+		LOGGER.debug("---- Starting Run ----");
+
 		client = ClientBuilder.newBuilder().build();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
-		env.jersey().register(new JacksonMessageBodyProvider(mapper));
 		githubProxyClient = new GithubProxyClient(
+				configuration.getGithubApiToken(),
+				configuration.getGithubApiBaseURL(), client, jedis);
+
+		redisCacheClient = new RedisCacheClient(
 				configuration.getGithubApiToken(),
 				configuration.getGithubApiBaseURL(), client, jedis);
 
 		scheduleCacheUpdate();
 
-		env.jersey().register(new GithubOrganizationResource(jedis));
-		env.jersey().register(new CustomViewResource(jedis));
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+		env.jersey().register(new JacksonMessageBodyProvider(mapper));
+		env.jersey().register(new GithubProxyResource(githubProxyClient));
 		env.healthChecks()
 				.register("healthcheck", new ServiceHealthCheck(pool));
+		env.jersey().register(new UnhandledExceptionMapper());
 
+		LOGGER.debug("---- Run Complete -- Ready ----");
 	}
 
 	private void scheduleCacheUpdate() throws SchedulerException {
 
-		JobDetail job = JobBuilder.newJob(CacheJob.class)
-				.withIdentity("cacheJob").build();
-		job.getJobDataMap().put("githubProxyClient", githubProxyClient);
+		LOGGER.debug("---- Scheduling Cache ----");
 
-		// specify the running period of the job
-		// TODO: Clean up and make minutes constant
+		JobDetail job = JobBuilder.newJob(CacheRefreshJob.class)
+				.withIdentity("cacheJob").build();
+		job.getJobDataMap().put("cacheClient", redisCacheClient);
+
 		Trigger trigger = TriggerBuilder
 				.newTrigger()
 				.withSchedule(
-						SimpleScheduleBuilder.simpleSchedule()
-								.withIntervalInMinutes(15).repeatForever())
-				.build();
+						SimpleScheduleBuilder
+								.simpleSchedule()
+								.withIntervalInMinutes(CACHE_REFRESH_IN_MINUTES)
+								.repeatForever()).build();
 
 		// schedule the job
 		SchedulerFactory schFactory = new StdSchedulerFactory();
 		Scheduler sch = schFactory.getScheduler();
 		sch.start();
 		sch.scheduleJob(job, trigger);
+
+		LOGGER.debug("---- Cache Scheduled ----");
 	}
 
 	@Override
@@ -94,6 +112,8 @@ public class GithubProxyApplication extends Application<ServiceConfiguration> {
 
 	@Override
 	public void initialize(Bootstrap<ServiceConfiguration> bootstrap) {
+		LOGGER.debug("---- Init Start ----");
+
 		bootstrap
 				.setConfigurationSourceProvider(new SubstitutingSourceProvider(
 						bootstrap.getConfigurationSourceProvider(),
@@ -110,6 +130,7 @@ public class GithubProxyApplication extends Application<ServiceConfiguration> {
 
 		jedis = pool.getResource();
 
+		LOGGER.debug("---- Init Done ----");
 	}
 
 	public static void main(String... args) throws Exception {
