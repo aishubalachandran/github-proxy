@@ -1,5 +1,7 @@
 package com.personal.nfx.githubproxy;
 
+import java.util.Set;
+
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -26,12 +28,15 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import com.bendb.dropwizard.redis.JedisBundle;
 import com.bendb.dropwizard.redis.JedisFactory;
+import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.Sets;
 import com.personal.nfx.githubproxy.resources.CustomViewResource;
 import com.personal.nfx.githubproxy.resources.GithubOrganizationResource;
+import com.personal.nfx.githubproxy.resources.ServiceHealthCheck;
 import com.personal.nfx.githubproxy.scheduler.CacheJob;
 
 public class GithubProxyApplication extends Application<ServiceConfiguration> {
@@ -55,10 +60,13 @@ public class GithubProxyApplication extends Application<ServiceConfiguration> {
 				configuration.getGithubApiToken(),
 				configuration.getGithubApiBaseURL(), client, jedis);
 
-		// scheduleCacheUpdate();
+		scheduleCacheUpdate();
 
 		env.jersey().register(new GithubOrganizationResource(jedis));
 		env.jersey().register(new CustomViewResource(jedis));
+		env.healthChecks()
+				.register("healthcheck", new ServiceHealthCheck(pool));
+
 	}
 
 	private void scheduleCacheUpdate() throws SchedulerException {

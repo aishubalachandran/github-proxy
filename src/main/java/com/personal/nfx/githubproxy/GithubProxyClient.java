@@ -112,6 +112,7 @@ public class GithubProxyClient {
 				int starGazersCount = jsonObject.getInt("stargazers_count");
 				int watchersCount = jsonObject.getInt("watchers_count");
 				String updatedAt = jsonObject.getString("updated_at");
+				String repoFullName = jsonObject.getString("full_name");
 
 				Map<String, String> repoProperties = new HashMap<String, String>();
 				repoProperties.put("forksCount", String.valueOf(forksCount));
@@ -123,6 +124,7 @@ public class GithubProxyClient {
 						String.valueOf(watchersCount));
 				repoProperties.put("updatedAt", String.valueOf(dateFormatter
 						.parse(updatedAt).getTime()));
+				repoProperties.put("fullName", repoFullName);
 				repoProperties.put("data", resultArray.get(i).toString());
 
 				consolidatedResult.put(resultArray.get(i));

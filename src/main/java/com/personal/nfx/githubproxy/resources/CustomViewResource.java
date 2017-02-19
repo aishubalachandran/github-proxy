@@ -12,10 +12,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.SortingParams;
+
+import com.google.common.collect.Lists;
 
 @Path("/view/top")
 public class CustomViewResource {
@@ -33,9 +34,11 @@ public class CustomViewResource {
 			@PathParam("result_count") @Min(0) int resultCount)
 			throws IOException {
 
-		List<String> result = jedis.sort("all:repos",
+		List<String> result = jedis.sort(
+				"all:repos",
 				new SortingParams().by("repo:*->forksCount")
-						.get("repo:*->data").limit(0, resultCount).desc());
+						.get("repo:*->fullName", "repo:*->forksCount")
+						.limit(0, resultCount).desc());
 
 		JSONArray responseArray = getJsonArray(result);
 
@@ -49,8 +52,10 @@ public class CustomViewResource {
 			@PathParam("result_count") @Min(0) int resultCount)
 			throws IOException {
 
-		List<String> result = jedis.sort("all:repos",
-				new SortingParams().by("repo:*->updatedAt").get("repo:*->data")
+		List<String> result = jedis.sort(
+				"all:repos",
+				new SortingParams().by("repo:*->updatedAt")
+						.get("repo:*->fullName", "repo:*->updatedAt")
 						.limit(0, resultCount).desc());
 
 		JSONArray responseArray = getJsonArray(result);
@@ -68,7 +73,8 @@ public class CustomViewResource {
 		List<String> result = jedis.sort(
 				"all:repos",
 				new SortingParams().by("repo:*->openIssuesCount")
-						.get("repo:*->data").limit(0, resultCount).desc());
+						.get("repo:*->fullName", "repo:*->openIssuesCount")
+						.limit(0, resultCount).desc());
 
 		JSONArray responseArray = getJsonArray(result);
 
@@ -85,7 +91,8 @@ public class CustomViewResource {
 		List<String> result = jedis.sort(
 				"all:repos",
 				new SortingParams().by("repo:*->starGazersCount")
-						.get("repo:*->data").limit(0, resultCount).desc());
+						.get("repo:*->fullName", "repo:*->starGazersCount")
+						.limit(0, resultCount).desc());
 
 		JSONArray responseArray = getJsonArray(result);
 
@@ -101,8 +108,9 @@ public class CustomViewResource {
 
 		List<String> result = jedis.sort(
 				"all:repos",
-				new SortingParams().by("repo:*->watcherCount")
-						.get("repo:*->data").limit(0, resultCount).desc());
+				new SortingParams().by("repo:*->watchersCount")
+						.get("repo:*->fullName", "repo:*->watchersCount")
+						.limit(0, resultCount).desc());
 
 		JSONArray responseArray = getJsonArray(result);
 
@@ -110,12 +118,17 @@ public class CustomViewResource {
 	}
 
 	private JSONArray getJsonArray(List<String> result) {
-		JSONArray amg1 = new JSONArray();
 
-		for (String string : result) {
-			JSONObject jsonObject = new JSONObject(string);
-			amg1.put(jsonObject);
+		List<List<String>> partitions = Lists.partition(result, 2);
+		JSONArray finalArray = new JSONArray();
+		for (List<String> partition : partitions) {
+			JSONArray subArray = new JSONArray();
+			subArray.put(partition.get(0));
+			subArray.put(partition.get(1));
+
+			finalArray.put(subArray);
 		}
-		return amg1;
+
+		return finalArray;
 	}
 }
