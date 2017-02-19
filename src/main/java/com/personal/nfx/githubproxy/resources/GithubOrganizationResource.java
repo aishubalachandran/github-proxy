@@ -14,7 +14,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import redis.clients.jedis.Jedis;
 
-@Path("/orgs")
+@Path("/")
 public class GithubOrganizationResource {
 
 	private final Jedis jedis;
@@ -23,7 +23,13 @@ public class GithubOrganizationResource {
 		this.jedis = jedis;
 	}
 
-	@Path("/{org_name}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getBase() throws IOException {
+		return Response.ok(jedis.get("base:data")).build();
+	}
+
+	@Path("orgs/{org_name}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrg(
@@ -32,7 +38,7 @@ public class GithubOrganizationResource {
 		return Response.ok(jedis.get("organization")).build();
 	}
 
-	@Path("/{org_name}/members")
+	@Path("orgs/{org_name}/members")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrgMembers(
@@ -40,7 +46,7 @@ public class GithubOrganizationResource {
 		return Response.ok(jedis.get("all:members")).build();
 	}
 
-	@Path("/{org_name}/repos")
+	@Path("orgs/{org_name}/repos")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrgRepos(

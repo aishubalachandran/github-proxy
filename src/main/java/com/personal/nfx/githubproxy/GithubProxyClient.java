@@ -42,11 +42,23 @@ public class GithubProxyClient {
 
 	public void fetchDataFromGithub() throws ParseException {
 
+		getBaseUrl();
+
 		getOrganization();
 
 		getAllRepositories();
 
 		getAllMembers();
+
+	}
+
+	private void getBaseUrl() {
+		WebTarget target = client.target(this.baseURL).path("/");
+
+		Response response = target.request(MediaType.APPLICATION_JSON)
+				.header("Authorization", "token " + this.apiToken).get();
+
+		jedis.set("base:data", response.readEntity(String.class));
 
 	}
 
