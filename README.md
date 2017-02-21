@@ -70,13 +70,21 @@ $  java -Ddw.server.adminConnectors[0].port=9091 -jar target/githubproxy-0.0.1-S
 The service exposes the following endpoints:
 
 ```sh
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/orgs/netflix/repos'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/orgs/netflix/members'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/view/top/5/open_issues'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/view/top/5/watchers'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/view/top/10/forks'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/view/top/5/stars'
-curl -X GET -H 'Content-Type: application/json' 'http://localhost:8080/view/top/5/last_updated'
+curl -X GET 'http://localhost:8080/'
+curl -X GET 'http://localhost:8080/orgs/netflix/repos'
+curl -X GET 'http://localhost:8080/orgs/netflix/members'
+curl -X GET 'http://localhost:8080/view/top/5/open_issues'
+curl -X GET 'http://localhost:8080/view/top/5/watchers'
+curl -X GET 'http://localhost:8080/view/top/10/forks'
+curl -X GET 'http://localhost:8080/view/top/5/stars'
+curl -X GET 'http://localhost:8080/view/top/5/last_updated'
+```
+For all other Github endpoints use :
+
+```sh
+curl -X GET 'http://localhost:8080/<same_path_as_the_actual_github_api>'
 ```
 
+### Caching
+
+Currently, the Redis API response cache is refreshed every __15 minutes__.
