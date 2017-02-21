@@ -15,6 +15,9 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import com.personal.nfx.githubproxy.client.IProxyClient;
 
+/*
+ * Resource for all Github Proxy APIs.
+ */
 @Path("/")
 public class GithubProxyResource {
 
@@ -24,12 +27,18 @@ public class GithubProxyResource {
 		this.proxyClient = proxyClient;
 	}
 
+	/*
+	 * Base URL
+	 */
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBase() throws IOException {
 		return proxyClient.getBaseResource();
 	}
 
+	/*
+	 * Organization details.
+	 */
 	@Path("orgs/{org_name}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -39,6 +48,9 @@ public class GithubProxyResource {
 		return proxyClient.getOrganization();
 	}
 
+	/*
+	 * Details about all members in the Organization.
+	 */
 	@Path("orgs/{org_name}/members")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -47,6 +59,9 @@ public class GithubProxyResource {
 		return proxyClient.getAllMembers();
 	}
 
+	/*
+	 * Details about all repos within the Organization
+	 */
 	@Path("orgs/{org_name}/repos")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -57,6 +72,10 @@ public class GithubProxyResource {
 		return proxyClient.getAllOrgRepos();
 	}
 
+	/*
+	 * Returns the Top N Forks. The Response contains the Repo name and the fork
+	 * count.
+	 */
 	@Path("view/top/{result_count}/forks")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -66,6 +85,10 @@ public class GithubProxyResource {
 		return proxyClient.getTopNForks(resultCount);
 	}
 
+	/*
+	 * Returns the Top N Last updated. The Response contains the Repo name and
+	 * the last updated timestamp.
+	 */
 	@Path("view/top/{result_count}/last_updated")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -76,6 +99,10 @@ public class GithubProxyResource {
 		return proxyClient.getTopNLastUpdated(resultCount);
 	}
 
+	/*
+	 * Returns the Top N Open issues. The Response contains the Repo name and
+	 * the open issues count.
+	 */
 	@Path("view/top/{result_count}/open_issues")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -86,6 +113,10 @@ public class GithubProxyResource {
 		return proxyClient.getTopNOpenIssues(resultCount);
 	}
 
+	/*
+	 * Returns the Top N Stars. The Response contains the Repo name and the
+	 * stars count.
+	 */
 	@Path("view/top/{result_count}/stars")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -96,6 +127,10 @@ public class GithubProxyResource {
 		return proxyClient.getTopNStars(resultCount);
 	}
 
+	/*
+	 * Returns the Top N Forks. The Response contains the Repo name and the
+	 * watchers count.
+	 */
 	@Path("view/top/{result_count}/watchers")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -106,6 +141,9 @@ public class GithubProxyResource {
 		return proxyClient.getTopNWatchers(resultCount);
 	}
 
+	/*
+	 * Proxies the call to the downstream and returns the exact response.
+	 */
 	@Path("{other: [a-zA-Z0-9_/]+}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)

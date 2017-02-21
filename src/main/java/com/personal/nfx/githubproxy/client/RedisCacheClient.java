@@ -17,6 +17,9 @@ import org.json.JSONObject;
 
 import redis.clients.jedis.Jedis;
 
+/*
+ * An implementation of the ICacheClient as a Cache client for Redis.
+ */
 public class RedisCacheClient implements ICacheClient {
 
 	private static final int PER_PAGE = 30;

@@ -39,6 +39,9 @@ import com.personal.nfx.githubproxy.resources.GithubProxyResource;
 import com.personal.nfx.githubproxy.resources.ServiceHealthCheck;
 import com.personal.nfx.githubproxy.scheduler.CacheRefreshJob;
 
+/*
+ * DropWizard Application class
+ */
 public class GithubProxyApplication extends Application<ServiceConfiguration> {
 
 	private static final Logger LOGGER = LoggerFactory
@@ -80,6 +83,9 @@ public class GithubProxyApplication extends Application<ServiceConfiguration> {
 		LOGGER.debug("---- Run Complete -- Ready ----");
 	}
 
+	/*
+	 * Method to setup the Cache update scheduler.
+	 */
 	private void scheduleCacheUpdate() throws SchedulerException {
 
 		LOGGER.debug("---- Scheduling Cache ----");

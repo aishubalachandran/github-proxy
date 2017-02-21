@@ -5,6 +5,9 @@ import redis.clients.jedis.JedisPool;
 
 import com.codahale.metrics.health.HealthCheck;
 
+/*
+ * HealthCheck resource to monitor the health of the service.
+ */
 public class ServiceHealthCheck extends HealthCheck {
 	private final JedisPool pool;
 
@@ -14,11 +17,10 @@ public class ServiceHealthCheck extends HealthCheck {
 
 	@Override
 	protected Result check() throws Exception {
-		try (Jedis jedis = pool.getResource()) {
-			final String pong = jedis.ping();
-			if ("PONG".equals(pong)) {
-				return Result.healthy();
-			}
+		Jedis jedis = pool.getResource();
+		final String pong = jedis.ping();
+		if ("PONG".equals(pong)) {
+			return Result.healthy();
 		}
 
 		return Result.unhealthy("Could not ping redis");

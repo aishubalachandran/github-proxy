@@ -7,6 +7,9 @@ import javax.validation.constraints.NotNull;
 import com.bendb.dropwizard.redis.JedisFactory;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/*
+ * Configuration for the service. 
+ */
 public class ServiceConfiguration extends Configuration {
 
 	private String githubApiToken;

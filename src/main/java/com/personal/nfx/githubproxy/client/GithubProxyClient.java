@@ -17,6 +17,9 @@ import redis.clients.jedis.SortingParams;
 
 import com.google.common.collect.Lists;
 
+/*
+ * An Implementation of the IProxyClient as a Proxy Client for Github APIs.
+ */
 public class GithubProxyClient implements IProxyClient {
 
 	private final String apiToken;

@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 import com.personal.nfx.githubproxy.GithubProxyApplication;
 import com.personal.nfx.githubproxy.client.ICacheClient;
 
+/*
+ * Periodic Job to refresh the Redis Cache. The Job is run every 15 minutes. Every the Job is triggered, API calls are made to Github to fetch 
+ * the details and are stored in the Redis Cache.
+ */
 public class CacheRefreshJob implements Job {
 
 	private static final Logger LOGGER = LoggerFactory
